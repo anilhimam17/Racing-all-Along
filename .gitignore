@@ -1,2 +1,5 @@
 # Untracking the dataset from version control
 data
+
+# Removing Asset Tracking
+.DS_Store
