@@ -3,3 +3,6 @@ data
 
 # Removing Asset Tracking
 .DS_Store
+
+# Untracking Python Caches
+__pycache__
