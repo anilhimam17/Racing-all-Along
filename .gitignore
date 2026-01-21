@@ -6,3 +6,6 @@ data
 
 # Untracking Python Caches
 __pycache__
+
+# Untracking Test Script
+test.py
