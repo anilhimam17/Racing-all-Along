@@ -5,5 +5,3 @@ from pathlib import Path
 DATA_PATH = Path("data")
 DATA_PATH.mkdir(exist_ok=True)
 
-SESSION_PATH = DATA_PATH / "session_info"
-SESSION_PATH.mkdir(exist_ok=True)
