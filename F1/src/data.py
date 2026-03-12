@@ -1,6 +1,10 @@
 from fastf1.events import Event
 from fastf1.core import Session
 
+from pandas import DataFrame, cut
+
+from src.utils import TELEMETRY_KEYPOINTS_BY_DIST
+
 
 class DataUtils:
     """This class implements most of the operations that will be taking place
@@ -9,6 +13,7 @@ class DataUtils:
 
     # ============ Standard Methods ============
     def __init__(self, race_event: Event, cache_dir: str) -> None:
+        
         self.race_event = race_event
         self.cache_dir = cache_dir
 
@@ -47,5 +52,27 @@ class DataUtils:
             session.load(laps=True, telemetry=True, weather=True, messages=True)
 
         return race_sims, quali, race
+    
+    def map_telemetry_keypoints(self, copy_frame: DataFrame) -> DataFrame:
+        """Performs the mapping between the Telemetry Distance channel and
+        identified keypoints and returns the modified copy of the dataframe."""
 
+        lap_reset_offset = 4228.4594
+        
+        # Offset the cumulative distance measure wrt each lap
+        copy_frame["Distance"] = copy_frame["Distance"].apply(
+            lambda x: (
+                x if x <= lap_reset_offset 
+                else ((x / lap_reset_offset) - (x // lap_reset_offset)) * lap_reset_offset
+            )
+        )
 
+        # Binning the telemetry keypoint based on distance
+        copy_frame["Keypoint"] = cut(
+            x=copy_frame["Distance"],
+            right=False,
+            labels=list(TELEMETRY_KEYPOINTS_BY_DIST.keys()),
+            bins=list(TELEMETRY_KEYPOINTS_BY_DIST.values()) + [lap_reset_offset]
+        )
+
+        return copy_frame
