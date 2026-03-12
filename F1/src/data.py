@@ -1,9 +1,5 @@
 from fastf1.events import Event
-from fastf1.core import Session
-
-from pandas import DataFrame, cut
-
-from src.utils import TELEMETRY_KEYPOINTS_BY_DIST
+from fastf1.core import Session, Laps
 
 
 class DataUtils:
@@ -18,12 +14,11 @@ class DataUtils:
         self.cache_dir = cache_dir
 
     # ============ Member Methods ============
-    def load_data(self) -> tuple[Session, Session, Session]:
-        """Loads the raw data for 3 sessions corresponding to the race weekend
+    def load_data(self) -> tuple[Session, Session]:
+        """Loads the raw data for 2 sessions corresponding to the race weekend
         that was passed during initialisation of the instance.
         
         The sessions loaded are:
-        - A Practice Session (1/2) depending on the type of the race weekend (Sprint / Normal).
         - The Qualifying Session
         - The Race Session
 
@@ -31,14 +26,8 @@ class DataUtils:
         - self: Instance of the DataUtils object
 
         Returns:
-        - tuple[practice: Session, quali: Session, race: Session]
+        - tuple[quali: Session, race: Session]
         """
-        
-        # Practice - 1/2 Session for analysing Provisional Race Sims
-        if "Sprint" not in self.race_event.values:
-            race_sims = self.race_event.get_practice(number=2)
-        else:
-            race_sims = self.race_event.get_practice(number=1)
 
         # Qualifying Session
         quali = self.race_event.get_qualifying()
@@ -47,32 +36,44 @@ class DataUtils:
         race = self.race_event.get_race()
 
         # Loading all the data corresponding to the sessions
-        sessions = [race_sims, quali, race]
+        sessions = [quali, race]
         for session in sessions:
             session.load(laps=True, telemetry=True, weather=True, messages=True)
 
-        return race_sims, quali, race
+        return quali, race
     
-    def map_telemetry_keypoints(self, copy_frame: DataFrame) -> DataFrame:
-        """Performs the mapping between the Telemetry Distance channel and
-        identified keypoints and returns the modified copy of the dataframe."""
-
-        lap_reset_offset = 4228.4594
+    def get_throttle_map(
+            self, 
+            driver_number: str,
+            driver_quali_laps: Laps
+        ) -> tuple[float, float, float]:
+        """Utilises the telemetry of each driver for their fastest lap in Q1
+        to identify the amount time spent on full throttle, gear changes / feathering and 
+        lift and coast.
         
-        # Offset the cumulative distance measure wrt each lap
-        copy_frame["Distance"] = copy_frame["Distance"].apply(
-            lambda x: (
-                x if x <= lap_reset_offset 
-                else ((x / lap_reset_offset) - (x // lap_reset_offset)) * lap_reset_offset
-            )
-        )
+        Args:
+        - driver_number: str
+        - driver_quali_telemetry: Telemetry
+        
+        Returns:
+        - tuple[
+            percent_full_throttle: float
+            percent_feathering_throttle: float
+            percent_lico_throttle: float
+        ]"""
 
-        # Binning the telemetry keypoint based on distance
-        copy_frame["Keypoint"] = cut(
-            x=copy_frame["Distance"],
-            right=False,
-            labels=list(TELEMETRY_KEYPOINTS_BY_DIST.keys()),
-            bins=list(TELEMETRY_KEYPOINTS_BY_DIST.values()) + [lap_reset_offset]
+        # Accessing the Driver Telemetry
+        driver_telemetry = (
+            driver_quali_laps
+            .pick_drivers(identifiers=driver_number)  # type: ignore
+            .pick_fastest()
+            .get_car_data()  # type: ignore
         )
+        tele_len = len(driver_telemetry)
 
-        return copy_frame
+        # Throttle Params
+        full_throttle_percent = len(driver_telemetry[driver_telemetry["Throttle"] >= 90]) / tele_len
+        lico_percent = len(driver_telemetry[driver_telemetry["Throttle"] <= 10].count()) / tele_len
+        transition_percent = 1 - full_throttle_percent - lico_percent
+
+        return full_throttle_percent, transition_percent, lico_percent
