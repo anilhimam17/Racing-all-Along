@@ -1,5 +1,5 @@
 from fastf1.events import Event
-from fastf1.core import Session, Laps
+from fastf1.core import Session, Telemetry
 
 
 class DataUtils:
@@ -26,8 +26,7 @@ class DataUtils:
         - self: Instance of the DataUtils object
 
         Returns:
-        - tuple[quali: Session, race: Session]
-        """
+        - (quali, race): tuple[Session, Session]"""
 
         # Qualifying Session
         quali = self.race_event.get_qualifying()
@@ -44,36 +43,27 @@ class DataUtils:
     
     def get_throttle_map(
             self, 
-            driver_number: str,
-            driver_quali_laps: Laps
+            driver_quali_telemetry: Telemetry
         ) -> tuple[float, float, float]:
         """Utilises the telemetry of each driver for their fastest lap in Q1
         to identify the amount time spent on full throttle, gear changes / feathering and 
         lift and coast.
         
         Args:
-        - driver_number: str
         - driver_quali_telemetry: Telemetry
         
         Returns:
-        - tuple[
+        - (full_throttle_percent, transition_percent, lico_percent): tuple[
             percent_full_throttle: float
             percent_feathering_throttle: float
             percent_lico_throttle: float
         ]"""
 
-        # Accessing the Driver Telemetry
-        driver_telemetry = (
-            driver_quali_laps
-            .pick_drivers(identifiers=driver_number)  # type: ignore
-            .pick_fastest()
-            .get_car_data()  # type: ignore
-        )
-        tele_len = len(driver_telemetry)
+        tele_len = len(driver_quali_telemetry)
 
         # Throttle Params
-        full_throttle_percent = len(driver_telemetry[driver_telemetry["Throttle"] >= 90]) / tele_len
-        lico_percent = len(driver_telemetry[driver_telemetry["Throttle"] <= 10].count()) / tele_len
+        full_throttle_percent = len(driver_quali_telemetry[driver_quali_telemetry["Throttle"] >= 90]) / tele_len
+        lico_percent = len(driver_quali_telemetry[driver_quali_telemetry["Throttle"] <= 10].count()) / tele_len
         transition_percent = 1 - full_throttle_percent - lico_percent
 
         return full_throttle_percent, transition_percent, lico_percent
