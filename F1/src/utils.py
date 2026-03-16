@@ -48,3 +48,17 @@ TELEMETRY_KEYPOINTS_BY_DIST = {
     "Home_acc": 3755,
     "Home_top_speed": 4100
 }
+
+# Segregating the Keypoints based on Average Load and Maximum Load on the Car
+# Avg Load: Corner Entry and Exit (bar braking load)
+AVG_LOAD_KEYS = [
+    "T1_in", "T2_out", "T4_in", "T5_out", "T6_in", 
+    "T7_out", "T8_in", "T8_out", "T9_in", "T9_out",
+    "T10_in", "T10_out", "T12_in", "T12_out"
+]
+
+# Max Load: Traction Zones and Acceleration Zones
+MAX_LOAD_KEYS = [
+    'Lap_start_top_speed', 'T1_braking_stability', 'T3_acc', 'T5_acc', 
+    'T10_acc', 'T11_load', 'T13_load', 'Home_acc', 'Home_top_speed'
+]
