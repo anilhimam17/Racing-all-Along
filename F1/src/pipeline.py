@@ -1,6 +1,10 @@
 from pandas import DataFrame, cut
 
-from src.utils import TELEMETRY_KEYPOINTS_BY_DIST
+from src.utils import (
+    TELEMETRY_KEYPOINTS_BY_DIST,
+    AVG_LOAD_KEYS,
+    MAX_LOAD_KEYS
+)
 
 
 class Pipeline:
@@ -15,7 +19,7 @@ class Pipeline:
     fuel_time_penality_per_kg = 0.3 / 10
 
     # Relaxation Factor for the Race fuel consumption
-    relaxation_factor = (0.10, 0.06, 0.04)
+    relaxation_factor = (0.06, 0.04, 0.02)
 
     # Fuel burn upper limit during a race 100kg/hr
     fuel_flow_rate_per_kg = 100 / 3600
@@ -101,8 +105,7 @@ class Pipeline:
         - driver_throttle_handle: tuple
         
         Returns:
-        - driver_laps: pd.DataFrame
-        """
+        - driver_laps: pd.DataFrame"""
         
         # Copying the Race Laptimes and Converting them to Seconds
         driver_laptimes = driver_laps["LapTime"].copy()
@@ -126,3 +129,34 @@ class Pipeline:
         )
 
         return driver_laps
+    
+    def get_efficiency_index_corner_to_straight(
+        self, 
+        driver_point_estimates_by_trace: DataFrame
+    ) -> tuple[float, float]:
+        """Calculates the Efficiency Index (Corner V Straight) for each driver based on the telemetry 
+        from Q1. The Efficiency Index (C_S) is defined as the ratio of mean to max speeds during cornering and 
+        traction keypoints around the track.
+        
+        Args:
+        - driver_point_estimates_by_trace: pd.DataFrame
+
+        Returns:
+        - (avg_eff, stl_eff): tuple[float, float]"""
+        
+        # Avg Load Efficiency: The ratio of mean speed to max speed through cornering keypoints
+        # Corner Entry Load,  Cornering Load, Corner Exit Load 
+        avg_load_keypoints = driver_point_estimates_by_trace.loc[AVG_LOAD_KEYS].copy()
+        avg_load_keypoints["per_corner_efficiency"] = avg_load_keypoints["mean"] / avg_load_keypoints["max"]
+
+        # Max Load Efficiency: The ratio of mean speed to max speed through traction keypoints
+        max_load_keypoints = driver_point_estimates_by_trace.loc[MAX_LOAD_KEYS].copy()
+        max_load_keypoints["per_stl_efficiency"] = max_load_keypoints["mean"] / max_load_keypoints["max"]
+
+        # Cornering Efficiency wrt Max
+        avg_eff = avg_load_keypoints["per_corner_efficiency"].mean()
+
+        # Straight Line Efficiency wrt Max
+        stl_eff = max_load_keypoints["per_stl_efficiency"].mean()
+
+        return avg_eff, stl_eff
