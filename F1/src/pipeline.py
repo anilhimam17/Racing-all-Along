@@ -1,5 +1,7 @@
 from pandas import DataFrame, cut
 
+from fastf1.core import Telemetry
+
 from src.utils import (
     TELEMETRY_KEYPOINTS_BY_DIST,
     AVG_LOAD_KEYS,
@@ -160,3 +162,69 @@ class Pipeline:
         stl_eff = max_load_keypoints["per_stl_efficiency"].mean()
 
         return avg_eff, stl_eff
+    
+    def get_keypoint_traction_energy(
+            self, 
+            driver_telemetry_trace: Telemetry
+        ) -> dict[str, tuple[float, float]]:
+        """Calculates the Traction Energy that is used by each driver based on the telemetry 
+        from Q1 for each mini-sector. The Traction Energy is defined as the energy withdrawn 
+        from the tyre for every meter of a lap by mapping the interactions between 
+        Throttle, Speed and Relative Distance travelled.
+        
+        Args:
+        - driver_telemetry_trace: Telemetry
+        
+        Returns:
+        - driver_keypoint_digest: dict[str, tuple[float, float]]"""
+
+        driver_keypoint_digest = {}
+        
+        # Iterating through the grouped keypoints sample from the driver telemetry
+        grouped_keypoint_telemetry = driver_telemetry_trace.groupby("Keypoint", observed=False)
+        for keypoint_group, telemetry in grouped_keypoint_telemetry:
+        
+            # Raw Unscaled Traction Energy: Weights Corners and Straight equally within each mini-sector
+            raw_traction_energy = (telemetry["Speed"] * telemetry["Throttle"] * telemetry["DifferentialDistance"]).sum()
+
+            # Total distance convered in the mini-sector
+            total_keypoint_distance = telemetry["DifferentialDistance"].sum()
+            
+            # Scaled Traction Energy: Normalised by energy consumed per meter of relative distance
+            scaled_traction_energy = raw_traction_energy / total_keypoint_distance
+            driver_keypoint_digest[keypoint_group] = (
+                scaled_traction_energy,
+                total_keypoint_distance
+            )
+
+        return driver_keypoint_digest
+    
+    def get_lap_traction_energy(
+            self, 
+            driver_keypoint_map: dict[str, tuple[float, float]]
+        ) -> float:
+        """Calculates the Traction Energy that is used by each driver based on the telemetry 
+        from the Q1 lap with a loose assumption that a Q1 lap is similar in pace to race lap.
+        The Traction Energy is defined as the energy withdrawn from the tyre for every meter 
+        of a lap by mapping the interactions between Throttle, Speed and Relative Distance travelled.
+
+        Here we rescaled the traction energies that were calculated for each mini-sector by weighing
+        them on their relative distance to normalise the energy for corners and straights alike.
+        
+        Args:
+        - driver_keypoint_map: dict[str, tuple[float, float]]
+        
+        Returns:
+        - lap_traction_energy: float"""
+
+        total_energy_interaction, total_distance = 0.0, 0.0
+
+        # Iterating through all the keypoints that compose the lap
+        for sector_energy, sector_distance in driver_keypoint_map.values():
+            total_energy_interaction += sector_energy * sector_distance
+            total_distance += sector_distance
+
+        # Lap-wise traction energy
+        lap_traction_energy = total_energy_interaction / total_distance
+
+        return lap_traction_energy
