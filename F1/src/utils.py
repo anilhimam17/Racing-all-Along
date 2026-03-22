@@ -62,3 +62,9 @@ MAX_LOAD_KEYS = [
     'Lap_start_top_speed', 'T1_braking_stability', 'T3_acc', 'T5_acc', 
     'T10_acc', 'T11_load', 'T13_load', 'Home_acc', 'Home_top_speed'
 ]
+
+# Braking Load: Braking Zones
+BRAKING_KEYS = [
+    "T1_braking_stability", "T1_in", "T4_in", "T6_in",
+    "T8_in", "T9_in", "T10_in", "T12_in", "T13_load"
+]
