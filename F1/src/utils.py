@@ -66,5 +66,5 @@ MAX_LOAD_KEYS = [
 # Braking Load: Braking Zones
 BRAKING_KEYS = [
     "T1_braking_stability", "T1_in", "T4_in", "T6_in",
-    "T8_in", "T9_in", "T10_in", "T12_in", "T13_load"
+    "T8_in", "T9_in", "T10_in", "T12_in"
 ]
