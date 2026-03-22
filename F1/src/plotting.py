@@ -16,7 +16,8 @@ class Plotting:
     def plot_driver_telemetry_traces(
             self,
             top_5_driver_telemetry: dict[str, Telemetry],
-            lap_number: int = 0
+            lap_number: int = 0,
+            show_distance: bool = False
         ) -> None:
         """Utilises Plotly to generate telemetry traces for the drivers to 
         compare driving, braking and throttle styles."""
@@ -46,6 +47,23 @@ class Plotting:
             speed_plot = (driver_telemetry["Speed"] / driver_telemetry["Speed"].max()) * 100
             gear_plot = (driver_telemetry["nGear"] / driver_telemetry["nGear"].max()) * 100
             brake_plot = (driver_telemetry["Brake"].map({True: 1, False: 0})) * 100
+            dist_plot = (driver_telemetry["Distance"] / driver_telemetry["Distance"].max()) * 100
+
+            # Generating the Distance Trace
+            if show_distance:
+                fig.add_trace(
+                    go.Scatter(
+                        x=driver_telemetry["Date"].dt.time,
+                        y=dist_plot,
+                        name="Distance",
+                        hovertemplate="%{text}<extra></extra>",
+                        text=[f"Distance: {round(driver_telemetry.iloc[i]["Distance"], 3)}" for i in range(len(driver_telemetry))],
+                        legendgroup="Distance",
+                        legendgrouptitle_text="Distance Traces"
+                    ),
+                    row=idx + 1,
+                    col=1
+                )
 
             # Generating the Throttle Trace
             fig.add_trace(
