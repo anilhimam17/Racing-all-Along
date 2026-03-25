@@ -31,7 +31,7 @@ class Pipeline:
     # ============ Pipeline Class Vars for Force and Energy calculations ============
 
     # Average Mass of the Car with Fuel Load
-    car_mass = 795
+    car_mass = 800
 
     # Average Mass of the Driver
     driver_mass = 75
@@ -194,7 +194,11 @@ class Pipeline:
         for keypoint_group, telemetry in grouped_keypoint_telemetry:
         
             # Raw Unscaled Traction Energy: Weights Corners and Straight equally within each mini-sector
-            raw_traction_energy = (telemetry["Speed"] * telemetry["Throttle"] * telemetry["DifferentialDistance"]).sum()
+            raw_traction_energy = (
+                telemetry["Speed"] * 
+                telemetry["Throttle"] * 
+                telemetry["DifferentialDistance"]
+            ).sum()
 
             # Total distance convered in the mini-sector
             total_keypoint_distance = telemetry["DifferentialDistance"].sum()
@@ -269,9 +273,9 @@ class Pipeline:
             braking_speed_diff = braking_speed_ms.diff().fillna(0.0)
 
             # Instantaneous Delta Braking Time in seconds
-            braking_time_s = braking_telemetry["Date"]
+            braking_time = braking_telemetry["Date"]
             braking_time_diff = (
-                braking_time_s
+                braking_time
                 .diff()
                 .dt.total_seconds()
             )
@@ -288,10 +292,31 @@ class Pipeline:
             braking_map[keypoint] = mean_deceleration
 
         return braking_map
-        
-    def get_driver_braking_force(
+    
+    def get_lap_braking_energy(
             self, 
-            driver_braking_energy_map: dict[str, float]
+            driver_braking_map: dict[str, float]
+        ) -> float:
+        """Calculates the Longitudinal Braking Energy that is used by each driver based 
+        on the telemetry from the Q1 lap with a loose assumption that a Q1 lap is similar 
+        in pace to a race lap. The Braking Energy is defined as the energy utilsed by the car and the
+        driver to brake in a straight-line / entering into a corner.
+
+        Here we take an average of braking energies that were calculated for each braking zone.
+        
+        Args:
+        - driver_braking_map: dict[str, float]
+        
+        Returns:
+        - lap_braking_energy: float"""
+
+        lap_braking_energy = sum(driver_braking_map.values()) / len(driver_braking_map)
+        return lap_braking_energy
+        
+    def get_keypoint_braking_force(
+            self, 
+            driver_braking_energy_map: dict[str, float],
+            mean_fuel_burn: float
         ) -> dict[str, float]:
         """Calculates the Longitudinal Braking Force that is used by each driver based 
         on the telemetry from the Q1 lap with a loose assumption that a Q1 lap is similar 
@@ -309,6 +334,28 @@ class Pipeline:
 
         # Iterating through the keypoints and the energy to map the force
         for keypoint, deceleration_energy in driver_braking_energy_map.items():
-            braking_force_map[keypoint] = (Pipeline.car_mass + Pipeline.driver_mass) * deceleration_energy
+            braking_force_map[keypoint] = (
+                (Pipeline.car_mass + Pipeline.driver_mass + mean_fuel_burn) * deceleration_energy
+            )
 
         return braking_force_map
+    
+    def get_lap_braking_force(
+            self, 
+            driver_braking_force_map: dict[str, float]
+        ) -> float:
+        """Calculates the Longitudinal Braking Force that is used by each driver based 
+        on the telemetry from the Q1 lap with a loose assumption that a Q1 lap is similar 
+        in pace to a race lap. The Braking Force extends the Braking energy that is calculated 
+        by the pipeline based on the estimated weight of the cars and the drivers.
+
+        Here we take an average of the braking forces that were calculated for each braking zone.
+        
+        Args:
+        - driver_braking_force_map: dict[str, float]
+        
+        Returns:
+        - lap_braking_force: float"""
+
+        lap_braking_force = sum(driver_braking_force_map.values()) / len(driver_braking_force_map)
+        return lap_braking_force
