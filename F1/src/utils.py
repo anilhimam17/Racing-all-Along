@@ -68,3 +68,11 @@ BRAKING_KEYS = [
     "T1_braking_stability", "T1_in", "T4_in", "T6_in",
     "T8_in", "T9_in", "T10_in", "T12_in"
 ]
+
+# Drop Columns for the Baseline Multivariate Dataframe
+MULTIVARIATE_DROP_COLS = [
+    "Time", "PitInTime", "PitOutTime", "Sector1SessionTime", "Sector2SessionTime",
+    "Sector3SessionTime", "SpeedI1", "SpeedI2", "SpeedFL", "SpeedST",
+    "IsPersonalBest", "Compound", "FreshTyre", "Team", "LapStartTime", "LapStartDate", 
+    "TrackStatus", "Deleted", "DeletedReason", "FastF1Generated", "IsAccurate"
+]
