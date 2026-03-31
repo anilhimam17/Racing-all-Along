@@ -1,0 +1,87 @@
+<svg width="100%" viewBox="0 0 680 500" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <style>
+    text { font-family: sans-serif; fill: #2C2C2A; }
+    .th  { font-size: 14px; font-weight: 500; }
+    .ts  { font-size: 12px; font-weight: 400; fill: #5F5E5A; }
+    .box-teal   { fill: #E1F5EE; stroke: #0F6E56; }
+    .box-blue   { fill: #E6F1FB; stroke: #185FA5; }
+    .box-purple { fill: #EEEDFE; stroke: #534AB7; }
+    .box-coral  { fill: #FAECE7; stroke: #993C1D; }
+    .box-amber  { fill: #FAEEDA; stroke: #854F0B; }
+    .th-teal    { fill: #085041; }
+    .th-blue    { fill: #0C447C; }
+    .th-purple  { fill: #3C3489; }
+    .th-coral   { fill: #712B13; }
+    .th-amber   { fill: #633806; }
+    .ts-teal    { fill: #0F6E56; }
+    .ts-blue    { fill: #185FA5; }
+    .ts-purple  { fill: #534AB7; }
+    .ts-coral   { fill: #993C1D; }
+    .ts-amber   { fill: #854F0B; }
+    .arr        { stroke: #888780; stroke-width: 1; fill: none; }
+  </style>
+</defs>
+
+<!-- Title -->
+<text class="th" x="340" y="28" text-anchor="middle">Fixed window keypoints — canonical circuit map</text>
+
+<!-- Inputs row -->
+<rect x="30" y="50" width="175" height="56" rx="8" stroke-width="0.5" class="box-teal"/>
+<text class="th th-teal" x="118" y="70" text-anchor="middle" dominant-baseline="central">circuit_info</text>
+<text class="ts ts-teal" x="118" y="88" text-anchor="middle" dominant-baseline="central">Corner nums + apex distances</text>
+
+<rect x="253" y="50" width="175" height="56" rx="8" stroke-width="0.5" class="box-teal"/>
+<text class="th th-teal" x="340" y="70" text-anchor="middle" dominant-baseline="central">Reference telemetry</text>
+<text class="ts ts-teal" x="340" y="88" text-anchor="middle" dominant-baseline="central">Polesitter Q1 fastest lap</text>
+
+<rect x="476" y="50" width="175" height="56" rx="8" stroke-width="0.5" class="box-amber"/>
+<text class="th th-amber" x="563" y="70" text-anchor="middle" dominant-baseline="central">Circuit config JSON</text>
+<text class="ts ts-amber" x="563" y="88" text-anchor="middle" dominant-baseline="central">Complexes + semantic roles</text>
+
+<!-- Arrows into detector -->
+<line x1="118" y1="106" x2="240" y2="164" class="arr" marker-end="url(#arrow)"/>
+<line x1="340" y1="106" x2="340" y2="164" class="arr" marker-end="url(#arrow)"/>
+<line x1="563" y1="106" x2="440" y2="164" class="arr" marker-end="url(#arrow)"/>
+
+<!-- Phase boundary detector -->
+<rect x="155" y="164" width="370" height="56" rx="8" stroke-width="0.5" class="box-purple"/>
+<text class="th th-purple" x="340" y="184" text-anchor="middle" dominant-baseline="central">Phase boundary detector</text>
+<text class="ts ts-purple" x="340" y="202" text-anchor="middle" dominant-baseline="central">Anchor on apex → backward braking → forward traction</text>
+
+<line x1="340" y1="220" x2="340" y2="250" class="arr" marker-end="url(#arrow)"/>
+
+<!-- Corner complex classifier -->
+<rect x="155" y="250" width="370" height="56" rx="8" stroke-width="0.5" class="box-purple"/>
+<text class="th th-purple" x="340" y="270" text-anchor="middle" dominant-baseline="central">Corner complex classifier</text>
+<text class="ts ts-purple" x="340" y="288" text-anchor="middle" dominant-baseline="central">Merge overlapping zones → complex_id</text>
+
+<line x1="340" y1="306" x2="340" y2="336" class="arr" marker-end="url(#arrow)"/>
+
+<!-- Canonical schema -->
+<rect x="100" y="336" width="480" height="56" rx="8" stroke-width="0.5" class="box-blue"/>
+<text class="th th-blue" x="340" y="356" text-anchor="middle" dominant-baseline="central">Canonical keypoint schema</text>
+<text class="ts ts-blue" x="340" y="374" text-anchor="middle" dominant-baseline="central">id · phase · dist_start · dist_end · complex_id · semantic_role</text>
+
+<!-- Fan to outputs -->
+<line x1="220" y1="392" x2="130" y2="432" class="arr" marker-end="url(#arrow)"/>
+<line x1="340" y1="392" x2="340" y2="432" class="arr" marker-end="url(#arrow)"/>
+<line x1="460" y1="392" x2="550" y2="432" class="arr" marker-end="url(#arrow)"/>
+
+<!-- Output boxes -->
+<rect x="30" y="432" width="200" height="44" rx="8" stroke-width="0.5" class="box-coral"/>
+<text class="th th-coral" x="130" y="448" text-anchor="middle" dominant-baseline="central">Traction energy</text>
+<text class="ts ts-coral" x="130" y="464" text-anchor="middle" dominant-baseline="central">Per phase, per driver</text>
+
+<rect x="240" y="432" width="200" height="44" rx="8" stroke-width="0.5" class="box-coral"/>
+<text class="th th-coral" x="340" y="448" text-anchor="middle" dominant-baseline="central">Braking force</text>
+<text class="ts ts-coral" x="340" y="464" text-anchor="middle" dominant-baseline="central">Per braking zone, per driver</text>
+
+<rect x="450" y="432" width="200" height="44" rx="8" stroke-width="0.5" class="box-coral"/>
+<text class="th th-coral" x="550" y="448" text-anchor="middle" dominant-baseline="central">Efficiency index</text>
+<text class="ts ts-coral" x="550" y="464" text-anchor="middle" dominant-baseline="central">Corner vs straight</text>
+
+</svg>
