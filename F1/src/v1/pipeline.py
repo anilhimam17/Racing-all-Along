@@ -1,6 +1,15 @@
+# FastF1 Deps
+from fastf1.core import Laps
+
+# Data Deps
+from pandas import Series, DataFrame
+
+# Source Deps
 from src.v1.config import (
+    CAR_WEIGHT_IN_KG,
+    MS_CONV_CONST,
+    STRAIGHTS,
     WEIGHT_TIME_CONV_CONST,
-    THROTTLE_CYCLE
 )
 
 
@@ -9,7 +18,125 @@ class DataPipeline:
     on the FastF1 Laps DataFrames. It can generate all the new features that are
     added to the raw FastF1 Laps DataFrame."""
 
-    # ===== Member Methods =====
+    # ==================== Member Methods ====================
+
+    # ==================== Filtering Methods ====================
+    def get_filtered_quali_laps(
+            self, 
+            laps_frame: Laps, 
+            drivers: list
+        ) -> DataFrame:
+        """This function filters all the laps from Q3 in qualifying to only the top runners
+        from the race and retrieves their respective fastest laptimes."""
+
+        # Aggregations functions for each of the cols for the best lap
+        agg_functions = {
+            "Sector1Time": "min",
+            "Sector2Time": "min",
+            "Sector3Time": "min",
+            "LapTime": "min",
+            "SpeedI1": "max",
+            "SpeedI2": "max",
+            "SpeedFL": "max",
+            "SpeedST": "max"
+        }
+
+        filtered_quali_laps = (
+            laps_frame
+            .pick_drivers(drivers)
+            .groupby("Driver")
+            .agg(agg_functions)
+            .reset_index()
+        )
+
+        return filtered_quali_laps
+    
+    # ==================== Qualifying Specific Methods ====================
+    def get_aero_efficiency(
+            self, 
+            v_sector: float, 
+            v_st: float, 
+            sector_time: float
+        ) -> float:
+        """This function estimates the Aero Efficiency of the Front and Rear Axles based on
+        the velocity params provided and the corresponding sector time."""
+
+        # Raw Speed Retention
+        speed_ratio = (v_sector / v_st) * MS_CONV_CONST
+
+        # Sector Time Weighting for better Pace Capture
+        aei = speed_ratio * sector_time * (1 / MS_CONV_CONST)
+
+        return aei
+    
+    def get_delta_kinetic_energy(
+        self,
+        v1: float,
+        v2: float
+    ) -> float:
+        """This function calculates the change in Kinetic Energy given velocity params and
+        returns the result in Kilo Joules."""
+
+        # Convert velocities to m/s before squaring to preserve physical scaling
+        v1_ms = v1 * MS_CONV_CONST
+        v2_ms = v2 * MS_CONV_CONST
+        delta_kinetic_energy = (
+            (1 / 2) * CAR_WEIGHT_IN_KG * 
+            (v2_ms ** 2 - v1_ms ** 2)
+        )
+
+        return delta_kinetic_energy / 10e3
+    
+    def get_delta_acceleration_time(
+        self,
+        circuit: str,
+        v1: float,
+        v2: float
+    ) -> float:
+        """This function calculates the acceleration time on the longest straight 
+        given velocity params and returns the result in seconds."""
+
+        distance_straight = STRAIGHTS[circuit]
+        delta_acceleration_time = (2 * distance_straight) / (v1 + v2)
+
+        return delta_acceleration_time * 3600
+
+    # ==================== Traffic and Delta related methods ====================
+    def get_traffic_delta(self, laps_frame: Laps) -> Laps:
+        """This function generates the effective traffic delta that each driver
+        tackles during the race. It especially plays a major role in pace and deg calculations."""
+
+        # Sorting all the Laps wrt Session Time
+        laps_frame = laps_frame.sort_values(by="Time", ascending=True, axis=0)
+
+        # Shifting the LapTimes by 1 period for delta
+        shifted_laptimes_wrt_session = laps_frame.groupby("LapNumber")["Time"].shift(1)
+
+        # Adding the New Delta's
+        laps_frame["TrafficDelta"] = self._calculate_traffic_delta(
+            current_driver_time=laps_frame["Time"],
+            driver_infront_time=shifted_laptimes_wrt_session
+        )
+
+        return laps_frame
+
+    def _calculate_traffic_delta(
+            self, 
+            current_driver_time: Series, 
+            driver_infront_time: Series
+        ) -> Series:
+        """This function calculates the actual interval between two drivers for each lap."""
+
+        # Driver Delta wrt Session Time
+        driver_deltas = current_driver_time - driver_infront_time
+        
+        return (
+            driver_deltas
+            .dt.total_seconds()
+            .fillna(0.0)
+        )
+
+    # ==================== Fuel and Pace related methods ====================
     def get_effective_fuel_load(
             self, 
             max_fuel_load_in_kg: int,
@@ -28,21 +155,17 @@ class DataPipeline:
     def get_effective_fuel_flow(
             self,
             effective_fuel_load: float,
-            fuel_flow_conv_const: float,
-            hybrid_contribution: float,
-            circuit_name: str,
+            race_laps: int,
+            avg_laptime: float,
         ) -> float:
         """This function estimates the effective fuel flow used by the team
         based on the provided parameters."""
 
-        throttle_cycle = THROTTLE_CYCLE[circuit_name]
+        # Average fuel burn per lap
+        avg_fuel_burn = effective_fuel_load / race_laps
+        target_fuel_flow = (avg_fuel_burn / avg_laptime) * 1000
 
-        return (
-            effective_fuel_load         # in kg
-            * fuel_flow_conv_const      # converted to gm/s
-            * throttle_cycle            # fuel flow at gm/s for throttle cycle percent
-            * (1 - hybrid_contribution)
-        )
+        return target_fuel_flow
     
     def get_lap_fuel_burn(
             self, 
