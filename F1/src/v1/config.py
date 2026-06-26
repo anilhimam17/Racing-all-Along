@@ -26,11 +26,6 @@ FUEL_SAMPLE_LIMIT = 3
 
 # ======================= Circuit Specific Configurations =======================
 
-# The Percentage of Time on Full Throttle by Circuit
-THROTTLE_CYCLE = {
-    "barcelona": 0.7
-}
-
 # The Distance the Longest Straight for a Given Circuit
 STRAIGHTS = {
     "barcelona": 0.44   # in KM by Al Kamel systems
