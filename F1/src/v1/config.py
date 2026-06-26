@@ -15,6 +15,9 @@ CAR_WEIGHT_IN_KG = 772
 # Weight to Time Conversion => 0.3s every 10kg
 WEIGHT_TIME_CONV_CONST = 0.3 / 10
 
+# KM-HR to M-S Time Conversion
+MS_CONV_CONST = 5 / 18
+
 # Considering Hybrid as a 48% split
 HYBRID_POWER = 0.47
 
@@ -32,3 +35,27 @@ THROTTLE_CYCLE = {
 STRAIGHTS = {
     "barcelona": 0.44   # in KM by Al Kamel systems
 }
+
+# ======================= Data Visualisation Configurations =======================
+
+AERO_VIS_CONFIG = [
+    ("Sector1Time", "FrontAEI", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"), 
+    ("Sector2Time", "BalancedAEI", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"), 
+    ("Sector3Time", "RearAEI", "Sector 3\nMedium - Low Speed, High Downforce")
+]
+
+ERS_VIS_CONFIG = [
+    ("AccelerationTime", "ERS_Clipping", "")
+]
+
+KE_VIS_CONFIG = [
+    ("Driver", "KineticEnergyS1", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"),
+    ("Driver", "KineticEnergyS2", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"),
+    ("Driver", "KineticEnergyS3", "Sector 3\nMedium - Low Speed, High Downforce"),
+]
+
+POWER_VIS_CONFIG = [
+    ("Driver", "PowerS1", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"),
+    ("Driver", "PowerS2", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"),
+    ("Driver", "PowerS3", "Sector 3\nMedium - Low Speed, High Downforce")
+]
