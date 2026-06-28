@@ -56,16 +56,20 @@ class DataPipeline:
             self, 
             v_sector: float, 
             v_st: float, 
-            sector_time: float
+            sector_time: float,
+            purple_sector_time: float
         ) -> float:
         """This function estimates the Aero Efficiency of the Front and Rear Axles based on
         the velocity params provided and the corresponding sector time."""
 
         # Raw Speed Retention
-        speed_ratio = (v_sector / v_st) * MS_CONV_CONST
+        speed_ratio = v_sector / v_st
+
+        # Time Weighting
+        time_ratio = sector_time / purple_sector_time
 
         # Sector Time Weighting for better Pace Capture
-        aei = speed_ratio * sector_time * (1 / MS_CONV_CONST)
+        aei = speed_ratio * time_ratio * MS_CONV_CONST
 
         return aei
     
@@ -85,7 +89,7 @@ class DataPipeline:
             (v2_ms ** 2 - v1_ms ** 2)
         )
 
-        return delta_kinetic_energy / 10e3
+        return delta_kinetic_energy / 1e3
     
     def get_delta_acceleration_time(
         self,

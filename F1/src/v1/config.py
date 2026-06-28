@@ -19,7 +19,7 @@ WEIGHT_TIME_CONV_CONST = 0.3 / 10
 MS_CONV_CONST = 5 / 18
 
 # Considering Hybrid as a 48% split
-HYBRID_POWER = 0.47
+HYBRID_POWER = 0.48
 
 # Fuel Sample Limit
 FUEL_SAMPLE_LIMIT = 3
@@ -44,13 +44,13 @@ ERS_VIS_CONFIG = [
 ]
 
 KE_VIS_CONFIG = [
-    ("Driver", "KineticEnergyS1", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"),
-    ("Driver", "KineticEnergyS2", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"),
-    ("Driver", "KineticEnergyS3", "Sector 3\nMedium - Low Speed, High Downforce"),
+    ("Driver", "KineticEnergyS1_KJ", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"),
+    ("Driver", "KineticEnergyS2_KJ", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"),
+    ("Driver", "KineticEnergyS3_KJ", "Sector 3\nMedium - Low Speed, High Downforce"),
 ]
 
 POWER_VIS_CONFIG = [
-    ("Driver", "PowerS1", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"),
-    ("Driver", "PowerS2", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"),
-    ("Driver", "PowerS3", "Sector 3\nMedium - Low Speed, High Downforce")
+    ("Driver", "PowerS1_KW", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"),
+    ("Driver", "PowerS2_KW", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"),
+    ("Driver", "PowerS3_KW", "Sector 3\nMedium - Low Speed, High Downforce")
 ]
