@@ -7,6 +7,9 @@ __pycache__
 # Untracking Test Script
 test.py
 
+# Untracking Prompts for Gemini-CLI during development
+prompts.md
+
 # Untracking the dataset from version control
 data
 
