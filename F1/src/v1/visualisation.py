@@ -159,3 +159,48 @@ class DataVisualisation:
             axes[ax_idx].grid()
 
         return fig
+    
+    def create_degradation_plot(
+        self,
+        laps_frame: DataFrame,
+        x: str,
+        y: str,
+        order: int,
+        hue: str,
+        height: int,
+        aspect: float,
+        row: str | None = None,
+        col: str | None = None
+    ) -> sns.FacetGrid:
+        """This function generates a seaborn Facet Grid that visualises Tyre Degradation
+        by Driver and Stint along with other customisations."""
+
+        # Outlined Grid for Facet Plots
+        pace_grid = sns.FacetGrid(
+            data=laps_frame,
+            sharex=False,
+            sharey=False,
+            hue=hue,
+            row=row,
+            col=col,
+            height=height,
+            aspect=aspect,
+            palette=self.driver_color
+        )
+
+        # Plotting the Facets with Regplots
+        pace_grid.map_dataframe(
+            sns.regplot,
+            x=x,
+            y=y,
+            order=order,
+            scatter_kws={"s": 60},
+        )
+
+        # Annotating the Facets
+        for ax in pace_grid.axes.flatten():
+            ax.grid()
+            ax.legend()
+
+        return pace_grid
+    
