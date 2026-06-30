@@ -204,3 +204,36 @@ class DataVisualisation:
 
         return pace_grid
     
+    def create_pace_plot(
+        self,
+        laps_frame: DataFrame,
+        x: str,
+        y: str,
+        hue: str,
+        figsize: tuple[int, int]
+    ) -> figure.Figure:
+        """This function generates a Seaborn Boxplot that visualises the Race Pace
+        by Driver and Stint along with other customisations."""
+
+        pace_grid, axes = plt.subplots(
+            nrows=1, 
+            ncols=1, 
+            figsize=figsize
+        )
+
+        # Plotting the Facets with Regplots
+        sns.boxplot(
+            data=laps_frame,
+            x=x,
+            y=y,
+            ax=axes,
+            hue=hue,
+            palette=self.driver_color,
+            gap=0.2
+        )
+
+        # Annotating the Facets
+        axes.legend()
+        axes.grid()
+
+        return pace_grid
