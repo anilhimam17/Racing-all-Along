@@ -33,6 +33,12 @@ STRAIGHTS = {
 
 # ======================= Data Visualisation Configurations =======================
 
+SECTOR_MAPS = {
+    "Sector1": ("SpeedI1", "Sector1Time", "KineticEnergyS1_KJ"),
+    "Sector2": ("SpeedI2", "Sector2Time", "KineticEnergyS2_KJ"),
+    "Sector3": ("SpeedFL", "Sector3Time", "KineticEnergyS3_KJ")
+}
+
 AERO_VIS_CONFIG = [
     ("Sector1Time", "FrontAEI", "Sector 1\nHigh Speed, Downforce / Drag Tradeoff"), 
     ("Sector2Time", "BalancedAEI", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"), 
