@@ -2,10 +2,11 @@
 from fastf1.core import Laps
 
 # Data Deps
-from pandas import Series, DataFrame
+from pandas import Series, DataFrame, concat
 
 # Source Deps
 from src.v1.config import (
+    SECTOR_MAPS,
     CAR_WEIGHT_IN_KG,
     MS_CONV_CONST,
     STRAIGHTS,
@@ -41,7 +42,7 @@ class DataPipeline:
             "SpeedST": "max"
         }
 
-        filtered_quali_laps = (
+        filtered_fastest_quali_laps = (
             laps_frame
             .pick_drivers(drivers)
             .groupby("Driver")
@@ -49,10 +50,77 @@ class DataPipeline:
             .reset_index()
         )
 
-        return filtered_quali_laps
+        return filtered_fastest_quali_laps
+    
+    def get_mean_race_laps(
+        self,
+        laps_frame: Laps,
+        drivers: list
+    ) -> DataFrame:
+        """This function filters all the race laps for the mean performance of 
+        each provided drivers and returns the filtered frame."""
+
+        agg_functions = {
+            "Sector1Time": "mean",
+            "Sector2Time": "mean",
+            "Sector3Time": "mean",
+            "LapTime": "mean",
+            "SpeedI1": "mean",
+            "SpeedI2": "mean",
+            "SpeedFL": "mean",
+            "SpeedST": "mean"
+        }
+
+        filtered_mean_race_laps = (
+            laps_frame
+            .pick_drivers(drivers)
+            .groupby("Driver")
+            .agg(agg_functions)
+            .reset_index()
+        )
+
+        return filtered_mean_race_laps
     
     # ==================== Qualifying Specific Methods ====================
     def get_aero_efficiency(
+            self,
+            sector: str,
+            laps_frame: Laps,
+            drivers: list
+    ) -> Series:
+        """The function orchestrates the calculation of Aero Efficiency for each driver
+        and returns the combined series for all the drivers."""
+
+        # Accessing the Respective Keys from Config
+        speed_key, time_key, _ = SECTOR_MAPS[sector]
+
+        # Full AEI series
+        sector_aei = None
+        for driver in drivers:
+            
+            # Filtering the laps for the current driver
+            driver_laps = laps_frame.pick_drivers(driver)
+            
+            # Calculating the AEI for the driver
+            driver_aei = driver_laps.apply(
+                lambda x: self._calc_aero_efficiency(
+                    v_sector=x[speed_key],
+                    v_st=x["SpeedST"],
+                    sector_time=x[time_key],
+                    purple_sector_time=driver_laps[time_key].min()
+                ),
+                axis=1
+            )
+
+            if sector_aei is None:
+                sector_aei = driver_aei
+            else:
+                sector_aei = concat([sector_aei, driver_aei], axis=0)
+
+        assert sector_aei is not None, "There sector aei was None"
+        return sector_aei
+    
+    def _calc_aero_efficiency(
             self, 
             v_sector: float, 
             v_st: float, 
@@ -66,7 +134,7 @@ class DataPipeline:
         speed_ratio = v_sector / v_st
 
         # Time Weighting
-        time_ratio = sector_time / purple_sector_time
+        time_ratio = purple_sector_time / sector_time
 
         # Sector Time Weighting for better Pace Capture
         aei = speed_ratio * time_ratio * MS_CONV_CONST
@@ -74,6 +142,42 @@ class DataPipeline:
         return aei
     
     def get_delta_kinetic_energy(
+            self,
+            sector: str,
+            laps_frame: Laps,
+            drivers: list
+    ) -> Series:
+        """The function orchestrates the calculation of Kinetic Energy Retention for 
+        each driver and returns the combined series for all the drivers."""
+
+        # Accessing the Respective Keys from Config
+        speed_key, _, _ = SECTOR_MAPS[sector]
+
+        # Full KE series
+        sector_ke = None
+        for driver in drivers:
+            
+            # Filtering the laps for the current driver
+            driver_laps = laps_frame.pick_drivers(driver)
+            
+            # Calculating the AEI for the driver
+            driver_ke = driver_laps.apply(
+                lambda x: self._calc_delta_kinetic_energy(
+                    v1=x[speed_key],
+                    v2=x["SpeedST"]
+                ),
+                axis=1
+            )
+
+            if sector_ke is None:
+                sector_ke = driver_ke
+            else:
+                sector_ke = concat([sector_ke, driver_ke], axis=0)
+
+        assert sector_ke is not None, "There sector ke was None"
+        return sector_ke
+    
+    def _calc_delta_kinetic_energy(
         self,
         v1: float,
         v2: float
@@ -90,6 +194,36 @@ class DataPipeline:
         )
 
         return delta_kinetic_energy / 1e3
+    
+    def get_power_expenditure(
+        self,
+        sector: str,
+        laps_frame: Laps,
+        drivers: list
+    ) -> Series:
+        """The function orchestrates the calculation of Power Expenditure of
+        each driver and returns the combined series for all the drivers."""
+
+        # Accessing the Respective Keys from Config
+        _, time_key, energy_key = SECTOR_MAPS[sector]
+
+        # Full Power series
+        sector_power = None
+        for driver in drivers:
+            
+            # Filtering the laps for the current driver
+            driver_laps = laps_frame.pick_drivers(driver)
+            
+            # Calculating the AEI for the driver
+            driver_power = driver_laps[energy_key] / driver_laps[time_key]
+
+            if sector_power is None:
+                sector_power = driver_power
+            else:
+                sector_power = concat([sector_power, driver_power], axis=0)
+
+        assert sector_power is not None, "There sector ke was None"
+        return sector_power
     
     def get_delta_acceleration_time(
         self,
@@ -110,16 +244,20 @@ class DataPipeline:
         """This function generates the effective traffic delta that each driver
         tackles during the race. It especially plays a major role in pace and deg calculations."""
 
-        # Sorting all the Laps wrt Session Time
-        laps_frame = laps_frame.sort_values(by="Time", ascending=True, axis=0)
+        # Sorting all the Laps wrt Session Time for Traffic
+        laps_frame_traffic = laps_frame.sort_values(
+            by="Time", 
+            ascending=True, 
+            axis=0
+        )
 
         # Shifting the LapTimes by 1 period for delta
-        shifted_laptimes_wrt_session = laps_frame.groupby("LapNumber")["Time"].shift(1)
+        shifted_laptimes_traffic = laps_frame_traffic.groupby("LapNumber")["Time"].shift(1)
 
         # Adding the New Delta's
         laps_frame["TrafficDelta"] = self._calculate_traffic_delta(
             current_driver_time=laps_frame["Time"],
-            driver_infront_time=shifted_laptimes_wrt_session
+            driver_infront_time=shifted_laptimes_traffic
         )
 
         return laps_frame
