@@ -6,10 +6,12 @@ from pandas import Series, DataFrame, concat
 
 # Source Deps
 from src.v1.config import (
-    SECTOR_MAPS,
     CAR_WEIGHT_IN_KG,
+    DIRECT_PROPORTION,
+    INVERSE_PROPORTION,
     MS_CONV_CONST,
     STRAIGHTS,
+    SECTOR_MAPS,
     WEIGHT_TIME_CONV_CONST,
 )
 
@@ -81,7 +83,7 @@ class DataPipeline:
 
         return filtered_mean_race_laps
     
-    # ==================== Qualifying Specific Methods ====================
+    # ==================== Feature Engineering Methods ====================
     def get_aero_efficiency(
             self,
             sector: str,
@@ -93,6 +95,9 @@ class DataPipeline:
 
         # Accessing the Respective Keys from Config
         speed_key, time_key, _ = SECTOR_MAPS[sector]
+
+        # Purple Sector Time for Reference
+        purple_sector_time = laps_frame[time_key].min()
 
         # Full AEI series
         sector_aei = None
@@ -107,7 +112,7 @@ class DataPipeline:
                     v_sector=x[speed_key],
                     v_st=x["SpeedST"],
                     sector_time=x[time_key],
-                    purple_sector_time=driver_laps[time_key].min()
+                    purple_sector_time=purple_sector_time
                 ),
                 axis=1
             )
@@ -338,3 +343,50 @@ class DataPipeline:
         """Helper function to estimate the fuel-aware (Zero-Fuel pace) laptime."""
         
         return laptime - fuel_penality
+    
+    # ==================== Rescaling Functions ====================
+    def get_rescaled_direct_features(self, laps_frame: DataFrame) -> DataFrame:
+        """This function orchestrates the rescaling of all the Directly Proportional
+        features from Mean / Best performance frames."""
+
+        for feature in DIRECT_PROPORTION:
+            laps_frame.loc[:, feature] = laps_frame.apply(
+                lambda x: self._scale_direct(
+                    x=x[feature],
+                    min_x=laps_frame[feature].min(),
+                    max_x=laps_frame[feature].max(),
+                ),
+                axis=1
+            )
+        
+        return laps_frame
+    
+    def get_rescaled_inverse_features(self, laps_frame: DataFrame) -> DataFrame:
+        """This function orchestrates the rescaling of all the Inversely Proportional
+        features from Mean / Best performance frames."""
+
+        for feature in INVERSE_PROPORTION:
+            laps_frame.loc[:, feature] = laps_frame.apply(
+                lambda x: self._scale_inverse(
+                    x=x[feature],
+                    min_x=laps_frame[feature].min(),
+                    max_x=laps_frame[feature].max(),
+                ),
+                axis=1
+            )
+        
+        return laps_frame
+
+    def _scale_direct(self, x: float, min_x: float, max_x: float) -> float:
+        """This function rescales the values of each feature which scales directly."""
+
+        numerator = x - min_x
+        denominator = max_x - min_x
+        return (numerator / denominator) * 100
+
+    def _scale_inverse(self, x: float, min_x: float, max_x: float) -> float:
+        """This funciton rescales the values of each feature which scales inversely."""
+
+        numerator = max_x - x
+        denominator = max_x - min_x
+        return (numerator / denominator) * 100
