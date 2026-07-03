@@ -6,13 +6,12 @@ from pandas import Series, DataFrame, concat
 
 # Source Deps
 from src.v1.config import (
-    CAR_WEIGHT_IN_KG,
-    DIRECT_PROPORTION,
-    INVERSE_PROPORTION,
-    MS_CONV_CONST,
-    STRAIGHTS,
     SECTOR_MAPS,
-    WEIGHT_TIME_CONV_CONST,
+    CarSepecifications,
+    CircuitData,
+    ConversionConstants,
+    FeatureConfig,
+    RaceStrategyConfig
 )
 
 
@@ -21,7 +20,14 @@ class DataPipeline:
     on the FastF1 Laps DataFrames. It can generate all the new features that are
     added to the raw FastF1 Laps DataFrame."""
 
-    # ==================== Member Methods ====================
+    def __init__(self) -> None:
+
+        # Instances of all the configurations used by the Pipeline
+        self.circuit_spec = CircuitData()
+        self.car_spec = CarSepecifications()
+        self.conversion_spec = ConversionConstants()
+        self.feature_spec = FeatureConfig()
+        self.race_spec = RaceStrategyConfig()
 
     # ==================== Filtering Methods ====================
     def get_filtered_quali_laps(
@@ -142,7 +148,7 @@ class DataPipeline:
         time_ratio = purple_sector_time / sector_time
 
         # Sector Time Weighting for better Pace Capture
-        aei = speed_ratio * time_ratio * MS_CONV_CONST
+        aei = speed_ratio * time_ratio * self.conversion_spec.MS_CONV_CONST
 
         return aei
     
@@ -191,10 +197,10 @@ class DataPipeline:
         returns the result in Kilo Joules."""
 
         # Convert velocities to m/s before squaring to preserve physical scaling
-        v1_ms = v1 * MS_CONV_CONST
-        v2_ms = v2 * MS_CONV_CONST
+        v1_ms = v1 * self.conversion_spec.MS_CONV_CONST
+        v2_ms = v2 * self.conversion_spec.MS_CONV_CONST
         delta_kinetic_energy = (
-            (1 / 2) * CAR_WEIGHT_IN_KG * 
+            (1 / 2) * self.car_spec.CAR_WEIGHT_IN_KG * 
             (v2_ms ** 2 - v1_ms ** 2)
         )
 
@@ -239,7 +245,7 @@ class DataPipeline:
         """This function calculates the acceleration time on the longest straight 
         given velocity params and returns the result in seconds."""
 
-        distance_straight = STRAIGHTS[circuit]
+        distance_straight = self.circuit_spec.STRAIGHTS[circuit]
         delta_acceleration_time = (2 * distance_straight) / (v1 + v2)
 
         return delta_acceleration_time * 3600
@@ -286,7 +292,7 @@ class DataPipeline:
     # ==================== Fuel and Pace related methods ====================
     def get_effective_fuel_load(
             self, 
-            max_fuel_load_in_kg: int,
+            max_fuel_load_in_kg: float,
             fuel_strat: float,
             fuel_sample_limit: float
         ) -> float:
@@ -333,7 +339,7 @@ class DataPipeline:
         delta_fuel_load = effective_fuel_load - cumulative_fuel_burn
         remaining_fuel_load = max(delta_fuel_load, 0.0)
 
-        return remaining_fuel_load * WEIGHT_TIME_CONV_CONST
+        return remaining_fuel_load * self.conversion_spec.WEIGHT_TIME_CONV_CONST
 
     def get_fuel_aware_laptime(
             self, 
@@ -349,7 +355,7 @@ class DataPipeline:
         """This function orchestrates the rescaling of all the Directly Proportional
         features from Mean / Best performance frames."""
 
-        for feature in DIRECT_PROPORTION:
+        for feature in self.feature_spec.DIRECT_PROPORTION:
             laps_frame.loc[:, feature] = laps_frame.apply(
                 lambda x: self._scale_direct(
                     x=x[feature],
@@ -365,7 +371,7 @@ class DataPipeline:
         """This function orchestrates the rescaling of all the Inversely Proportional
         features from Mean / Best performance frames."""
 
-        for feature in INVERSE_PROPORTION:
+        for feature in self.feature_spec.INVERSE_PROPORTION:
             laps_frame.loc[:, feature] = laps_frame.apply(
                 lambda x: self._scale_inverse(
                     x=x[feature],
