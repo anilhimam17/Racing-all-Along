@@ -23,21 +23,21 @@ class FeatureConfig:
 
     # Pace Specific Categories
     PACE_CATEGORIES: list[str] = field(default_factory=lambda: [
-        "LapTime", "Sector1Time", "Sector2Time", "Sector3Time", 
-        *FeatureConfig.COMMON_CATEGORIES
+        "LapTime", "Sector1Time", "Sector2Time", "Sector3Time",
+        "AccelerationTime", "ERS_Clipping"
     ])
 
     # Speed Specific Categories
     SPEED_CATEGORIES: list[str] = field(default_factory=lambda: [
         "SpeedI1", "SpeedI2", "SpeedFL", "SpeedST",
         "FrontAEI", "BalancedAEI", "RearAEI", 
-        *FeatureConfig.COMMON_CATEGORIES, FeatureConfig.PACE_CATEGORIES[0]
+        "AccelerationTime", "ERS_Clipping", "LapTime"
     ])
 
     # Energy Specific Categories
     ENERGY_CATEGORIES: list[str] = field(default_factory=lambda: [
         "KineticEnergyS1_KJ", "KineticEnergyS2_KJ", "KineticEnergyS3_KJ",
-        *FeatureConfig.COMMON_CATEGORIES, FeatureConfig.PACE_CATEGORIES[0]
+        "AccelerationTime", "ERS_Clipping", "LapTime"
     ])
 
     # ======================= Feature Scaling Properties =======================
@@ -47,7 +47,9 @@ class FeatureConfig:
     ])
 
     INVERSE_PROPORTION: list[str] = field(default_factory=lambda: [
-        "Sector1Time", "Sector2Time", "Sector3Time", *FeatureConfig.ENERGY_CATEGORIES
+        "Sector1Time", "Sector2Time", "Sector3Time", 
+        "KineticEnergyS1_KJ", "KineticEnergyS2_KJ", "KineticEnergyS3_KJ",
+        "AccelerationTime", "ERS_Clipping", "LapTime"
     ])
 
 
@@ -137,3 +139,12 @@ class VisualisationConfig:
         ("Driver", "PowerS2_KW", "Sector 2\nMedium Speed, High Downforce & Minimal Drag"),
         ("Driver", "PowerS3_KW", "Sector 3\nMedium - Low Speed, High Downforce")
     ])
+
+    POLAR_CONFIG: dict = field(default_factory=lambda: 
+        dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100]
+            )
+        )
+    )
