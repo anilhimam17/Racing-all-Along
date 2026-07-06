@@ -4,11 +4,8 @@
 # Untracking Python Caches
 __pycache__
 
-# Untracking Test Script
-test.py
-
-# Untracking Prompts for Gemini-CLI during development
-prompts.md
+# Untracking Tasks and Todo
+tasks
 
 # Untracking the dataset from version control
 data
