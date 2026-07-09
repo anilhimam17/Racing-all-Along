@@ -752,6 +752,16 @@ wheels = [
 ]
 
 [[package]]
+name = "mark-1"
+version = "0.1.0"
+source = { git = "https://github.com/anilhimam17/Mark-1.git#fe56bc6965630f8043dde7cfa904051627dae50e" }
+dependencies = [
+    { name = "fastf1" },
+    { name = "plotly" },
+    { name = "seaborn" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1652,6 +1662,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "fastf1" },
     { name = "ipykernel" },
+    { name = "mark-1" },
     { name = "matplotlib" },
     { name = "nbconvert" },
     { name = "nbformat" },
@@ -1668,6 +1679,7 @@ dependencies = [
 requires-dist = [
     { name = "fastf1", specifier = ">=3.7.0" },
     { name = "ipykernel", specifier = ">=7.1.0" },
+    { name = "mark-1", git = "https://github.com/anilhimam17/Mark-1.git" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "nbconvert", specifier = ">=7.17.1" },
     { name = "nbformat", specifier = ">=5.10.4" },

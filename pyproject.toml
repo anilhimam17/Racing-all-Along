@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "fastf1>=3.7.0",
     "ipykernel>=7.1.0",
+    "mark-1",
     "matplotlib>=3.10.8",
     "nbconvert>=7.17.1",
     "nbformat>=5.10.4",
@@ -18,3 +19,6 @@ dependencies = [
     "seaborn>=0.13.2",
     "torch>=2.9.1",
 ]
+
+[tool.uv.sources]
+mark-1 = { git = "https://github.com/anilhimam17/Mark-1.git" }
